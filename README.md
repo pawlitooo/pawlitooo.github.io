@@ -73,3 +73,49 @@
     </div>
 </body>
 </html>
+<button id="buyNow">Kup teraz</button>
+<script src="https://js.stripe.com/v3/"></script>
+<script src="script.js"></script>
+JavaScript (script.js)
+javascript
+Kopiuj
+Edytuj
+const stripe = Stripe("TWÓJ_KLUCZ_STRIPE");
+
+document.getElementById("buyNow").addEventListener("click", async () => {
+    const response = await fetch("/create-checkout-session", { method: "POST" });
+    const session = await response.json();
+    window.location.href = session.url;
+});
+Backend (Node.js – serwer obsługujący płatności)
+javascript
+Kopiuj
+Edytuj
+const express = require("express");
+const stripe = require("stripe")("TWÓJ_TAJNY_KLUCZ_STRIPE");
+
+const app = express();
+app.use(express.json());
+
+app.post("/create-checkout-session", async (req, res) => {
+    const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [
+            {
+                price_data: {
+                    currency: "pln",
+                    product_data: { name: "Produkt XYZ" },
+                    unit_amount: 5000, // 50.00 PLN
+                },
+                quantity: 1,
+            },
+        ],
+        mode: "payment",
+        success_url: "https://twoja-strona.pl/success",
+        cancel_url: "https://twoja-strona.pl/cancel",
+    });
+
+    res.json({ url: session.url });
+});
+
+app.listen(3000, () => console.log("Serwer działa na porcie 3000"));
